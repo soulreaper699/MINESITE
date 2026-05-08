@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOXEL | Overworld</title>
+<meta name="description" content="The most immersive Minecraft interactive experience on the web.">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<!-- CDNs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+</head>
+<body>
+
+<!-- WebGL Background -->
+<canvas id="webgl-canvas"></canvas>
+
+<!-- Custom Crosshair Cursor -->
+<div id="cursor-crosshair">
+  <div class="ch-h"></div>
+  <div class="ch-v"></div>
+</div>
+
+<!-- ============================================================
+     MINECRAFT HUD OVERLAY (fixed bottom)
+     ============================================================ -->
+<div id="mc-hud">
+  <!-- Health Bar -->
+  <div id="hud-health">
+    <span id="health-label">♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥</span>
+    <span id="hunger-label">🍗 🍗 🍗 🍗 🍗 🍗 🍗 🍗 🍗 🍗</span>
+  </div>
+  <!-- EXP Bar -->
+  <div id="exp-bar-wrap">
+    <div id="exp-bar-fill"></div>
+    <span id="exp-level">LVL 0</span>
+  </div>
+  <!-- Hotbar -->
+  <div id="hotbar">
+    <div class="slot active" data-target="#home"    data-key="1"><div class="item">⛏</div><span class="slot-num">1</span><div class="tooltip">OVERWORLD</div></div>
+    <div class="slot" data-target="#armory"  data-key="2"><div class="item">⚔️</div><span class="slot-num">2</span><div class="tooltip">ARMORY</div></div>
+    <div class="slot" data-target="#nether"  data-key="3"><div class="item">🔥</div><span class="slot-num">3</span><div class="tooltip">THE NETHER</div></div>
+    <div class="slot" data-target="#redstone"data-key="4"><div class="item">🔴</div><span class="slot-num">4</span><div class="tooltip">REDSTONE</div></div>
+    <div class="slot" data-target="#end"     data-key="5"><div class="item">🌑</div><span class="slot-num">5</span><div class="tooltip">THE END</div></div>
+    <div class="slot" data-target="#reserve" data-key="6"><div class="item">📜</div><span class="slot-num">6</span><div class="tooltip">WHITELIST</div></div>
+    <div class="slot" data-target="#home"    data-key="7"><div class="item">🏹</div><span class="slot-num">7</span><div class="tooltip">SHOP (SOON)</div></div>
+    <div class="slot" data-target="#home"    data-key="8"><div class="item">🍎</div><span class="slot-num">8</span><div class="tooltip">FARM (SOON)</div></div>
+    <div class="slot" data-target="#home"    data-key="9"><div class="item">💎</div><span class="slot-num">9</span><div class="tooltip">VAULT (SOON)</div></div>
+  </div>
+</div>
+
+<!-- Global Navigation -->
+<nav>
+  <div class="logo"><a href="index.html">VOXEL</a></div>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link" style="font-family:'Press Start 2P',cursive;font-size:0.45rem;color:rgba(255,255,255,0.5);">◀ PORTAL</a>
+    <a href="#" id="btn-blueprint" class="nav-link">F3</a>
+    <span id="coords-display">X:0 Y:64 Z:0</span>
+    <button id="btn-bgm"  class="mc-btn">BGM ▶</button>
+    <button id="btn-next" class="mc-btn">▶▶</button>
+  </div>
+</nav>
+
+<!-- Configurator Inventory Panel -->
+<div id="configurator-panel">
+  <div class="config-header">▣ INVENTORY</div>
+  <div class="config-control">
+    <label>WORLD DRAG</label>
+    <input type="range" id="slider-aero" min="0" max="2" step="0.1" value="0.5">
+  </div>
+  <div class="config-control">
+    <label>ORE COMPOSITE</label>
+    <button id="btn-material" class="mc-btn full">OBSIDIAN</button>
+  </div>
+  <div class="config-control">
+    <button id="btn-ignition" class="mc-btn full btn-ignition">SCULK SENSOR (MIC)</button>
+  </div>
+</div>
+
+<!-- F3 Debug Overlay -->
+<div id="f3-overlay">
+  <div>Voxel 2.0 / Overworld</div>
+  <div id="f3-fps">FPS: --</div>
+  <div id="f3-pos">XYZ: 0.000 / 64.000 / 0.000</div>
+  <div>Biome: minecraft:deep_dark</div>
+  <div>Facing: North</div>
+  <div id="f3-scene">Scene: overworld (0.0)</div>
+</div>
+
+<!-- HTML5 Audio Player (C418) -->
+<audio id="audio-player" preload="none"></audio>
+<script>
+window.c418Tracks = [
+  { title:'Sweden',           src:'https://archive.org/download/minecraft-volume-alpha/C418%20-%20Minecraft%20-%20Volume%20Alpha%20-%2012%20Sweden.mp3' },
+  { title:'Subwoofer Lullaby',src:'https://archive.org/download/minecraft-volume-alpha/C418%20-%20Minecraft%20-%20Volume%20Alpha%20-%2002%20Subwoofer%20Lullaby.mp3' },
+  { title:'Wet Hands',        src:'https://archive.org/download/minecraft-volume-alpha/C418%20-%20Minecraft%20-%20Volume%20Alpha%20-%2009%20Wet%20Hands.mp3' },
+  { title:'Mice on Venus',    src:'https://archive.org/download/minecraft-volume-alpha/C418%20-%20Minecraft%20-%20Volume%20Alpha%20-%2011%20Mice%20on%20Venus.mp3' },
+  { title:'Living Mice',      src:'https://archive.org/download/minecraft-volume-alpha/C418%20-%20Minecraft%20-%20Volume%20Alpha%20-%2001%20Key.mp3' },
+];
+</script>
+
+<!-- SCROLLABLE CONTENT -->
+<main id="scroll-container">
+
+  <!-- OVERWORLD -->
+  <section id="home" class="panel">
+    <div class="content-block">
+      <div class="mc-badge reveal-text">BIOME: DEEP DARK</div>
+      <h1 class="reveal-text">THE DEEP<br>DARK</h1>
+      <p class="reveal-text">Immerse yourself in a completely procedural, interactive voxel universe. 65,536 particles. Real-time GPU physics. Zero frame drops.</p>
+      <div class="mc-stats reveal-text">
+        <div class="stat-box"><div class="stat-val">65K+</div><div class="stat-lbl">PARTICLES</div></div>
+        <div class="stat-box"><div class="stat-val">GLSL</div><div class="stat-lbl">GPU ENGINE</div></div>
+        <div class="stat-box"><div class="stat-val">∞</div><div class="stat-lbl">WORLDS</div></div>
+      </div>
+    </div>
+    <div class="scroll-indicator">SCROLL TO MINE ↓</div>
+  </section>
+
+  <!-- ARMORY -->
+  <section id="armory" class="panel right-align">
+    <div id="hud-width"  class="hud-label">DURABILITY: 1561</div>
+    <div id="hud-length" class="hud-label">ENCHANT: EFFICIENCY V</div>
+    <div class="content-block">
+      <div class="mc-badge reveal-text">ITEM: DIAMOND PICKAXE</div>
+      <h2 class="reveal-text">DIAMOND<br>PICKAXE</h2>
+      <p class="reveal-text">Forged from the rarest veins of the overworld. 65,536 GPU-simulated voxel blocks assemble this legendary tool in real time.</p>
+      <div class="enchant-list reveal-text">
+        <div class="enchant">✦ Efficiency V</div>
+        <div class="enchant">✦ Unbreaking III</div>
+        <div class="enchant">✦ Fortune III</div>
+        <div class="enchant">✦ Mending</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NETHER -->
+  <section id="nether" class="panel">
+    <div class="content-block">
+      <div class="mc-badge reveal-text">DIMENSION: NETHER</div>
+      <h2 class="reveal-text">THE<br>NETHER</h2>
+      <p class="reveal-text">A hellscape of lava lakes and blazing netherrack. 65,000 magma voxels in chaotic thermal convection.</p>
+      <div class="nether-warning reveal-text">⚠ FIRE RESISTANCE REQUIRED</div>
+    </div>
+  </section>
+
+  <!-- REDSTONE -->
+  <section id="redstone" class="panel right-align">
+    <div class="content-block">
+      <div class="mc-badge reveal-text">MECHANISM: REDSTONE</div>
+      <h2 class="reveal-text">REDSTONE<br>CORE</h2>
+      <p class="reveal-text">Our engine is powered by a massive pulsing redstone core. Audio-reactive physics. Real-time microphone Sculk Sensor.</p>
+      <div class="mc-stats reveal-text">
+        <div class="stat-box"><div class="stat-val">15</div><div class="stat-lbl">SIGNAL STR</div></div>
+        <div class="stat-box"><div class="stat-val">0ms</div><div class="stat-lbl">LATENCY</div></div>
+        <div class="stat-box"><div class="stat-val">60</div><div class="stat-lbl">TPS</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE END -->
+  <section id="end" class="panel center-align">
+    <div class="content-block">
+      <div class="mc-badge reveal-text">DIMENSION: THE END</div>
+      <h2 class="reveal-text">THE END</h2>
+      <p class="reveal-text">Beyond the void, the Ender Dragon awaits. 65,536 obsidian pillars rain down as the particles collapse into an infinite rotating EndPortal.</p>
+    </div>
+  </section>
+
+  <!-- WHITELIST -->
+  <section id="reserve" class="panel center-align">
+    <div class="content-block">
+      <div class="mc-badge reveal-text">📜 WHITELIST APPLICATION</div>
+      <h2 class="reveal-text">JOIN SERVER</h2>
+      <p class="reveal-text">Server slots are strictly limited. Submit your IGN to join the queue.</p>
+      <form id="reserve-form" class="reveal-text">
+        <input type="text"  placeholder="MINECRAFT IGN"  required>
+        <input type="text"  placeholder="DISCORD TAG"    required>
+        <input type="email" placeholder="EMAIL ADDRESS"  required>
+        <button type="submit" class="mc-btn full large">SUBMIT WHITELIST REQUEST</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-content">
+      <div class="brand">VOXEL © 2026 Interactive Server.</div>
+      <div class="links">
+        <a href="index.html">Portal Room</a>
+        <a href="pages/jukebox.html">Jukebox</a>
+        <a href="pages/achievements.html">Achievements</a>
+        <a href="#">Discord</a>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<script src="sounds.js"></script>
+<script src="webgl.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VOXEL | Enchanting Room</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+body{background:#03000a;min-height:100vh;overflow-x:hidden;}
+.ench-page{position:relative;z-index:10;padding:70px 40px 60px;max-width:900px;margin:0 auto;}
+h1{font-family:'Press Start 2P',cursive;font-size:0.8rem;color:#aa00ff;text-shadow:2px 2px 0 #440066, 0 0 20px rgba(170,0,255,0.5);margin:20px 0;}
+.ench-ui{display:flex;gap:30px;flex-wrap:wrap;justify-content:center;margin-bottom:30px;}
+.ench-table{background:#0e0020;border:3px solid #330055;border-top-color:#7700bb;border-left-color:#7700bb;padding:24px;min-width:320px;box-shadow:0 0 40px rgba(120,0,220,0.3);}
+.ench-title{font-family:'Press Start 2P',cursive;font-size:0.55rem;color:#aa00ff;margin-bottom:16px;text-align:center;}
+.item-slot{width:60px;height:60px;background:#1a0030;border:2px solid #330055;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 16px;}
+.lapis-row{display:flex;gap:6px;justify-content:center;margin-bottom:16px;}
+.lapis-slot{width:28px;height:28px;background:#1a0030;border:1px solid #330055;display:flex;align-items:center;justify-content:center;}
+.ench-option{background:#1a0030;border:1px solid #330055;padding:10px;cursor:none;display:flex;justify-content:space-between;margin-bottom:6px;transition:all 0.2s;}
+.ench-option:hover{background:#2a0050;border-color:#aa00ff;box-shadow:0 0 16px rgba(170,0,255,0.4);}
+.ench-glyphs{font-family:'VT323',monospace;color:#7700bb;font-size:0.95rem;}
+.ench-xp{font-family:'Press Start 2P',cursive;font-size:0.4rem;color:#55ff55;}
+.picker-wrap{background:#0e0020;border:2px solid #330055;padding:16px;min-width:180px;}
+.picker-title{font-family:'Press Start 2P',cursive;font-size:0.45rem;color:#aa00ff;margin-bottom:10px;}
+.picker-grid{display:flex;flex-wrap:wrap;gap:4px;}
+.picker-item{font-size:1.4rem;width:40px;height:40px;background:#1a0030;border:1px solid #330055;display:flex;align-items:center;justify-content:center;cursor:none;transition:background 0.15s;}
+.picker-item:hover,.picker-item.sel{background:#2a0060;border-color:#aa00ff;}
+.ench-result{margin-top:16px;background:#0e0020;border:2px solid #7700bb;padding:14px;text-align:center;}
+.ench-result-lbl{font-family:'Press Start 2P',cursive;font-size:0.45rem;color:#aa00ff;margin-bottom:6px;}
+.ench-result-name{font-family:'VT323',monospace;font-size:1.8rem;color:#aa88ff;}
+#particles-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+</style>
+</head>
+<body>
+<canvas id="particles-canvas"></canvas>
+<nav class="mc-nav">
+  <a class="mc-nav-logo" href="../index.html">VOXEL</a>
+  <div class="mc-nav-links">
+    <a href="../index.html">PORTAL ROOM</a>
+    <a href="enchanting.html" class="active">ENCHANTING</a>
+  </div>
+</nav>
+<div class="ench-page">
+  <h1>✦ ENCHANTING ROOM</h1>
+  <div class="ench-ui">
+    <div class="ench-table">
+      <div class="ench-title">▣ ENCHANTING TABLE</div>
+      <div class="item-slot" id="item-slot">⚔</div>
+      <div class="lapis-row">
+        <div class="lapis-slot">🔷</div><div class="lapis-slot">🔷</div><div class="lapis-slot">🔷</div>
+      </div>
+      <div id="ench-options"></div>
+      <div class="ench-result">
+        <div class="ench-result-lbl">SELECTED ENCHANTMENT</div>
+        <div class="ench-result-name" id="result-name">— Hover above —</div>
+      </div>
+    </div>
+    <div class="picker-wrap">
+      <div class="picker-title">SELECT ITEM</div>
+      <div class="picker-grid" id="picker-grid"></div>
+    </div>
+  </div>
+</div>
+<script src="../sounds.js"></script>
+<script src="../shared.js"></script>
+<script>
+const DB={'⚔':['Sharpness V','Looting III','Fire Aspect II','Knockback II','Unbreaking III','Mending'],
+'⛏':['Efficiency V','Fortune III','Silk Touch','Unbreaking III','Mending'],
+'🏹':['Power V','Flame','Infinity','Punch II','Mending'],
+'🛡':['Protection IV','Thorns III','Blast Protection IV','Unbreaking III','Mending']};
+const ITEMS=Object.keys(DB);let sel='⚔';
+const pickerGrid=document.getElementById('picker-grid');
+const optionsEl=document.getElementById('ench-options');
+ITEMS.forEach(it=>{
+  const d=document.createElement('div');d.className='picker-item'+(it===sel?' sel':'');d.textContent=it;
+  d.addEventListener('click',()=>{document.querySelectorAll('.picker-item').forEach(e=>e.classList.remove('sel'));d.classList.add('sel');sel=it;document.getElementById('item-slot').textContent=it;render();});
+  pickerGrid.appendChild(d);
+});
+function scramble(s){return s.split('').map(c=>{if(c>='a'&&c<='z')return String.fromCharCode(0x1D41A+(c.charCodeAt(0)-97));if(c>='A'&&c<='Z')return String.fromCharCode(0x1D400+(c.charCodeAt(0)-65));return c;}).join('');}
+function render(){
+  optionsEl.innerHTML='';
+  (DB[sel]||[]).slice(0,3).forEach((e,i)=>{
+    const d=document.createElement('div');d.className='ench-option';
+    d.innerHTML=`<div class="ench-glyphs">${scramble(e.toLowerCase())}</div><div class="ench-xp">${i+1} Lapis · ${(i+1)*10} XP</div>`;
+    d.addEventListener('click',()=>{document.getElementById('result-name').textContent=e;unlockAchievement('enchanted');});
+    optionsEl.appendChild(d);
+  });
+}
+render();
+// Particles
+const c=document.getElementById('particles-canvas');c.width=innerWidth;c.height=innerHeight;
+const ctx=c.getContext('2d');
+const pts=Array.from({length:50},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,vy:-(Math.random()*0.3+0.05),char:'✦✧⬟⬠◈◆'[Math.random()*6|0],a:Math.random()*0.4+0.1}));
+function draw(){ctx.clearRect(0,0,c.width,c.height);pts.forEach(p=>{ctx.fillStyle=`rgba(130,0,255,${p.a})`;ctx.font='14px sans-serif';ctx.fillText(p.char,p.x,p.y);p.y+=p.vy;if(p.y<0){p.y=c.height;p.x=Math.random()*c.width;}});requestAnimationFrame(draw);}
+draw();window.addEventListener('resize',()=>{c.width=innerWidth;c.height=innerHeight;});
+</script>
+</body>
+</html>
+

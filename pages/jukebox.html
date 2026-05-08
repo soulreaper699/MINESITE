@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VOXEL | Jukebox</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+body{background:#0d0d0d;min-height:100vh;overflow:hidden;}
+.jukebox-page{padding:70px 20px 40px;display:flex;flex-direction:column;align-items:center;gap:20px;}
+h1{font-family:'Press Start 2P',cursive;font-size:0.75rem;color:var(--mc-blue);text-shadow:2px 2px 0 #003355;margin:16px 0;}
+/* Jukebox 3D */
+.jukebox-body{
+  width:200px;height:260px;position:relative;
+  background:linear-gradient(135deg,#222,#111);
+  border:4px solid #555;border-top-color:#888;border-left-color:#888;
+  box-shadow:6px 6px 0 #000, 0 0 40px rgba(0,229,255,0.15);
+  display:flex;flex-direction:column;align-items:center;padding:16px 12px;
+  gap:10px;
+}
+.jb-screen{width:100%;background:#001122;border:2px solid #333;border-bottom-color:#666;border-right-color:#666;padding:8px;text-align:center;flex:1;}
+.jb-track-title{font-family:'Press Start 2P',cursive;font-size:0.4rem;color:var(--mc-blue);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.jb-artist{font-family:'VT323',monospace;font-size:1rem;color:#555;}
+.jb-visualizer{display:flex;align-items:flex-end;gap:2px;height:30px;margin:6px 0;justify-content:center;}
+.jb-bar{width:5px;background:var(--mc-blue);border-radius:0;transition:height 0.15s;}
+.disc-slot{width:70px;height:70px;background:#111;border:3px solid #333;border-bottom-color:#666;border-right-color:#666;border-radius:50%;position:relative;overflow:hidden;flex-shrink:0;}
+.disc-inner{position:absolute;inset:8px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;transition:transform 0.1s;}
+.disc-playing{animation:spin 3s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.disc-hole{position:absolute;width:12px;height:12px;background:#111;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);}
+/* Controls */
+.jb-controls{display:flex;gap:6px;}
+/* Track list */
+.track-list{width:min(400px,95vw);background:#111;border:2px solid #333;}
+.track-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #222;cursor:none;transition:background 0.15s;}
+.track-item:hover{background:#1a1a2e;}
+.track-item.playing{background:#001a33;border-left:3px solid var(--mc-blue);}
+.track-disc{font-size:1.5rem;}
+.track-name{font-family:'Press Start 2P',cursive;font-size:0.4rem;flex:1;}
+.track-artist{font-family:'VT323',monospace;font-size:1rem;color:#555;}
+.track-dur{font-family:'VT323',monospace;font-size:1rem;color:#444;}
+/* Note particles */
+#notes-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+.jb-time{font-family:'VT323',monospace;font-size:1rem;color:#336;margin-top:2px;}
+</style>
+</head>
+<body>
+<canvas id="notes-canvas"></canvas>
+<audio id="jb-audio" preload="none"></audio>
+<nav class="mc-nav">
+  <a class="mc-nav-logo" href="../index.html">VOXEL</a>
+  <div class="mc-nav-links">
+    <a href="../index.html">PORTAL ROOM</a>
+    <a href="jukebox.html" class="active">JUKEBOX</a>
+  </div>
+</nav>
+<div class="jukebox-page">
+  <h1>🎵 THE JUKEBOX</h1>
+  <div class="jukebox-body">
+    <div class="jb-screen">
+      <div class="jb-track-title" id="jb-title">INSERT DISC</div>
+      <div class="jb-artist">C418</div>
+      <div class="jb-visualizer" id="jb-viz"></div>
+      <div class="jb-time" id="jb-time">0:00 / 0:00</div>
+    </div>
+    <div class="disc-slot">
+      <div class="disc-inner" id="disc-inner">💿</div>
+      <div class="disc-hole"></div>
+    </div>
+    <div class="jb-controls">
+      <button class="mc-btn" id="jb-prev">◀◀</button>
+      <button class="mc-btn blue" id="jb-play">▶</button>
+      <button class="mc-btn" id="jb-next">▶▶</button>
+    </div>
+  </div>
+  <div class="track-list" id="track-list"></div>
+</div>
+<script src="../sounds.js"></script>
+<script src="../shared.js"></script>
+<script>
+const TRACKS=[
+  {title:'Sweden',          disc:'🟦',dur:'3:35',src:'https://archive.org/download/minecraft-volume-alpha/C418%20-%20Minecraft%20-%20Volume%20Alpha%20-%2012%20Sweden.mp3'},
+  {title:'Subwoofer Lullaby',disc:'🟩',dur:'3:28',src:'https://archive.org/download/minecraft-volume-alpha/C418%20-%20Minecraft%20-%20Volume%20Alpha%20-%2002%20Subwoofer%20Lullaby.mp3'},
+  {title:'Wet Hands',       disc:'🟧',dur:'1:30',src:'https://archive.org/download/minecraft-volume-alpha/C418%20-%20Minecraft%20-%20Volume%20Alpha%20-%2009%20Wet%20Hands.mp3'},
+  {title:'Mice on Venus',   disc:'🟪',dur:'4:25',src:'https://archive.org/download/minecraft-volume-alpha/C418%20-%20Minecraft%20-%20Volume%20Alpha%20-%2011%20Mice%20on%20Venus.mp3'},
+  {title:'Key',             disc:'🔴',dur:'1:05',src:'https://archive.org/download/minecraft-volume-alpha/C418%20-%20Minecraft%20-%20Volume%20Alpha%20-%2001%20Key.mp3'},
+];
+
+const audio=document.getElementById('jb-audio');
+audio.volume=0.45;
+let curIdx=0,playing=false;
+
+const jbTitle=document.getElementById('jb-title');
+const discInner=document.getElementById('disc-inner');
+const jbPlay=document.getElementById('jb-play');
+const jbTime=document.getElementById('jb-time');
+const trackList=document.getElementById('track-list');
+
+function fmt(s){const m=Math.floor(s/60),sc=Math.floor(s%60);return `${m}:${sc<10?'0':''}${sc}`;}
+
+function loadTrack(idx,autoplay){
+  curIdx=idx;
+  const t=TRACKS[idx];
+  jbTitle.textContent=t.title;
+  discInner.textContent=t.disc;
+  audio.src=t.src;
+  document.querySelectorAll('.track-item').forEach((el,i)=>el.classList.toggle('playing',i===idx));
+  if(autoplay){
+    audio.play().then(()=>{
+      playing=true;jbPlay.textContent='■';
+      discInner.classList.add('disc-playing');
+      unlockAchievement('musicPlayed');
+    }).catch(e=>console.warn('Audio blocked:',e));
+  }
+}
+
+jbPlay.addEventListener('click',()=>{
+  if(!playing){
+    if(!audio.src||audio.src===location.href)loadTrack(curIdx,true);
+    else audio.play().then(()=>{playing=true;jbPlay.textContent='■';discInner.classList.add('disc-playing');unlockAchievement('musicPlayed');});
+  } else {
+    audio.pause();playing=false;jbPlay.textContent='▶';discInner.classList.remove('disc-playing');
+  }
+});
+document.getElementById('jb-prev').addEventListener('click',()=>loadTrack((curIdx-1+TRACKS.length)%TRACKS.length,playing));
+document.getElementById('jb-next').addEventListener('click',()=>loadTrack((curIdx+1)%TRACKS.length,playing));
+audio.addEventListener('ended',()=>loadTrack((curIdx+1)%TRACKS.length,true));
+audio.addEventListener('timeupdate',()=>{if(audio.duration)jbTime.textContent=`${fmt(audio.currentTime)} / ${fmt(audio.duration)}`;});
+
+TRACKS.forEach((t,i)=>{
+  const row=document.createElement('div');row.className='track-item';
+  row.innerHTML=`<span class="track-disc">${t.disc}</span><span class="track-name">${t.title}</span><span class="track-artist">C418</span><span class="track-dur">${t.dur}</span>`;
+  row.addEventListener('click',()=>loadTrack(i,true));
+  trackList.appendChild(row);
+});
+
+// Visualizer bars (fake animated)
+const viz=document.getElementById('jb-viz');
+const bars=Array.from({length:16},()=>{const b=document.createElement('div');b.className='jb-bar';b.style.height='4px';viz.appendChild(b);return b;});
+function animViz(){
+  bars.forEach(b=>{
+    const h=playing?Math.random()*24+2:2;
+    b.style.height=h+'px';
+    b.style.opacity=playing?0.8+Math.random()*0.2:0.3;
+  });
+  setTimeout(animViz,playing?100:500);
+}
+animViz();
+
+// Note particles
+const c=document.getElementById('notes-canvas');c.width=innerWidth;c.height=innerHeight;
+const ctx=c.getContext('2d');
+const notes=Array.from({length:20},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,vy:-(Math.random()*0.5+0.2),char:'♪♫♩♬'[Math.random()*4|0],a:0,ta:Math.random()*0.4+0.1}));
+function drawNotes(){
+  ctx.clearRect(0,0,c.width,c.height);
+  notes.forEach(n=>{
+    if(playing)n.a=Math.min(n.a+0.01,n.ta);else n.a=Math.max(n.a-0.01,0);
+    ctx.fillStyle=`rgba(0,229,255,${n.a})`;ctx.font='18px serif';ctx.fillText(n.char,n.x,n.y);
+    if(playing){n.y+=n.vy;if(n.y<-20){n.y=innerHeight;n.x=Math.random()*innerWidth;}}
+  });
+  requestAnimationFrame(drawNotes);
+}
+drawNotes();
+window.addEventListener('resize',()=>{c.width=innerWidth;c.height=innerHeight;});
+</script>
+</body>
+</html>
+
+

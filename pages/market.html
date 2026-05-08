@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VOXEL | Market</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+body{background:#0a0a0f;}
+.market-page{padding:70px 40px 60px;max-width:1100px;margin:0 auto;}
+h1{font-family:'Press Start 2P',cursive;font-size:0.8rem;color:var(--mc-gold);text-shadow:2px 2px 0 #553300;margin:20px 0;}
+.market-desc{font-family:'VT323',monospace;font-size:1.4rem;color:#888;margin-bottom:30px;}
+.ranks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;}
+.rank-card{
+  background:#111; border:3px solid #333;
+  border-top-color:#555;border-left-color:#555;
+  padding:0; overflow:hidden; position:relative;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+.rank-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.6);}
+.rank-header{padding:20px;text-align:center;position:relative;}
+.rank-icon{font-size:3rem;display:block;margin-bottom:8px;filter:drop-shadow(0 0 10px currentColor);}
+.rank-name{font-family:'Press Start 2P',cursive;font-size:0.8rem;text-shadow:2px 2px 0 #000;}
+.rank-tag{font-family:'VT323',monospace;font-size:1.2rem;opacity:0.7;margin-top:4px;}
+.rank-perks{padding:16px;border-top:2px solid #222;}
+.perk{font-family:'VT323',monospace;font-size:1.1rem;color:#aaa;padding:4px 0;display:flex;align-items:center;gap:6px;}
+.perk::before{content:'✦';color:currentColor;font-size:0.9rem;}
+.rank-footer{padding:12px 16px 16px;display:flex;justify-content:space-between;align-items:center;}
+.rank-price{font-family:'Press Start 2P',cursive;font-size:0.65rem;}
+.chest-anim{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.85);opacity:0;pointer-events:none;
+  transition:opacity 0.3s;font-size:4rem;
+  animation:none;
+}
+.rank-card.opening .chest-anim{opacity:1;}
+.rank-card.opening .chest-anim span{animation:chestPop 0.6s ease;}
+@keyframes chestPop{0%{transform:scale(0.5);opacity:0;}50%{transform:scale(1.4);}100%{transform:scale(1);opacity:1;}}
+.sold-out{
+  position:absolute;top:12px;right:-28px;background:#ff5555;
+  font-family:'Press Start 2P',cursive;font-size:0.4rem;
+  padding:4px 36px;transform:rotate(30deg);
+  box-shadow:0 2px 8px rgba(255,85,85,0.5);
+}
+</style>
+</head>
+<body>
+<nav class="mc-nav">
+  <a class="mc-nav-logo" href="../index.html">VOXEL</a>
+  <div class="mc-nav-links">
+    <a href="../index.html">PORTAL ROOM</a>
+    <a href="market.html" class="active">MARKET</a>
+  </div>
+</nav>
+<div class="market-page">
+  <h1>🛒 CHEST SHOP</h1>
+  <p class="market-desc">Click any rank chest to open it and see what's inside.</p>
+  <div class="ranks-grid" id="ranks-grid"></div>
+</div>
+<script src="../sounds.js"></script>
+<script src="../shared.js"></script>
+<script>
+const RANKS = [
+  {
+    name:'STONE', tag:'[Stone]', price:'FREE', icon:'🪨', color:'#aaa',
+    gradient:'linear-gradient(135deg,#333,#222)',
+    perks:['Access to all basic commands','Public chat & voice','5 Home locations','Basic kit every day'],
+    soldOut:false,
+  },
+  {
+    name:'IRON', tag:'[Iron]', price:'$4.99', icon:'⚙', color:'#c0c0c0',
+    gradient:'linear-gradient(135deg,#4a4a5a,#232330)',
+    perks:['All Stone perks','Fly in non-PvP zones','10 Home locations','Iron kit every 12h','Custom nickname'],
+    soldOut:false,
+  },
+  {
+    name:'GOLD', tag:'[Gold]', price:'$9.99', icon:'🌟', color:'#ffaa00',
+    gradient:'linear-gradient(135deg,#4a3800,#1e1600)',
+    perks:['All Iron perks','Priority queue','25 Home locations','Gold kit every 6h','Particle effects'],
+    soldOut:false,
+  },
+  {
+    name:'DIAMOND', tag:'[Diamond]', price:'$19.99', icon:'💎', color:'#00e5ff',
+    gradient:'linear-gradient(135deg,#003344,#001122)',
+    perks:['All Gold perks','Create private realms','Unlimited homes','Diamond kit every 3h','Custom join message'],
+    soldOut:false,
+  },
+  {
+    name:'NETHERITE', tag:'[Netherite]', price:'$39.99', icon:'🔱', color:'#8866aa',
+    gradient:'linear-gradient(135deg,#1a0a2e,#0a0515)',
+    perks:['All Diamond perks','Staff-level commands','God Mode kit daily','Modded world access','Name in lobby'],
+    soldOut:false,
+  },
+  {
+    name:'LEGEND', tag:'[Legend]', price:'$74.99', icon:'👑', color:'#ff4444',
+    gradient:'linear-gradient(135deg,#2e0000,#150000)',
+    perks:['ALL perks unlocked','Unique cosmetics','Ban immunity (fair-play)','Direct admin access','IRL nameplate'],
+    soldOut:true,
+  },
+];
+
+const grid = document.getElementById('ranks-grid');
+RANKS.forEach(r => {
+  const card = document.createElement('div');
+  card.className = 'rank-card';
+  card.style.background = r.gradient;
+  card.innerHTML = `
+    ${r.soldOut ? '<div class="sold-out">SOLD OUT</div>' : ''}
+    <div class="rank-header" style="color:${r.color}">
+      <span class="rank-icon">${r.icon}</span>
+      <div class="rank-name" style="color:${r.color}">${r.name}</div>
+      <div class="rank-tag">${r.tag}</div>
+    </div>
+    <div class="rank-perks">${r.perks.map(p=>`<div class="perk" style="color:${r.color};">${p}</div>`).join('')}</div>
+    <div class="rank-footer">
+      <span class="rank-price" style="color:${r.color}">${r.price}</span>
+      ${!r.soldOut ? `<button class="mc-btn gold">OPEN CHEST</button>` : '<span style="font-family:\'Press Start 2P\',cursive;font-size:0.4rem;color:#555">UNAVAILABLE</span>'}
+    </div>
+    <div class="chest-anim"><span>📦</span></div>
+  `;
+  if (!r.soldOut) {
+    card.querySelector('.mc-btn').addEventListener('click', () => {
+      card.classList.add('opening');
+      unlockAchievement('purchased');
+      setTimeout(() => { card.classList.remove('opening'); }, 1500);
+    });
+  }
+  grid.appendChild(card);
+});
+</script>
+</body>
+</html>
+

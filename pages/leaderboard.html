@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VOXEL | Leaderboard</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+body{background:#0a0a0f;}
+.lb-page{padding:70px 40px 60px;max-width:860px;margin:0 auto;}
+h1{font-family:'Press Start 2P',cursive;font-size:0.75rem;color:#00e5ff;text-shadow:2px 2px 0 #003355;margin:20px 0;}
+/* Tab bar (ping info) */
+.tab-header{background:#333;border:2px solid #555;border-bottom:none;display:flex;align-items:center;padding:6px 12px;gap:16px;}
+.tab-header-txt{font-family:'Press Start 2P',cursive;font-size:0.45rem;color:#ccc;}
+.tab-list{border:2px solid #555;overflow:hidden;}
+.tab-row{display:flex;align-items:center;padding:7px 12px;border-bottom:1px solid #222;transition:background 0.15s;gap:12px;}
+.tab-row:last-child{border-bottom:none;}
+.tab-row:hover{background:#1a1a2e;}
+.tab-row.self{background:#002244;border-left:3px solid #00e5ff;}
+.ping-bars{display:flex;align-items:flex-end;gap:2px;width:20px;}
+.ping-bar{background:#55ff55;width:4px;}
+.rank-num{font-family:'Press Start 2P',cursive;font-size:0.4rem;color:#555;width:24px;text-align:right;}
+.player-head{font-size:1.2rem;}
+.player-name{font-family:'VT323',monospace;font-size:1.3rem;flex:1;}
+.player-tag{font-family:'Press Start 2P',cursive;font-size:0.38rem;padding:2px 6px;border-radius:0;margin-right:4px;}
+.player-score{font-family:'Press Start 2P',cursive;font-size:0.4rem;color:#ffaa00;width:70px;text-align:right;}
+.player-playtime{font-family:'VT323',monospace;font-size:1rem;color:#555;width:60px;text-align:right;}
+.tab-footer{background:#222;border:2px solid #555;border-top:none;padding:5px 12px;display:flex;justify-content:space-between;}
+.tab-footer-txt{font-family:'Press Start 2P',cursive;font-size:0.38rem;color:#555;}
+.filters{display:flex;gap:8px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<nav class="mc-nav">
+  <a class="mc-nav-logo" href="../index.html">VOXEL</a>
+  <div class="mc-nav-links">
+    <a href="../index.html">PORTAL ROOM</a>
+    <a href="leaderboard.html" class="active">LEADERBOARD</a>
+  </div>
+</nav>
+<div class="lb-page">
+  <h1>📊 TOP PLAYERS</h1>
+  <div class="filters">
+    <button class="mc-btn" id="f-score">BY SCORE</button>
+    <button class="mc-btn" id="f-playtime">BY PLAYTIME</button>
+    <button class="mc-btn" id="f-kills">BY KILLS</button>
+  </div>
+  <div class="tab-header">
+    <span class="tab-header-txt">VOXEL SERVER — 24/100 ONLINE</span>
+    <span style="flex:1"></span>
+    <span class="tab-header-txt">SCORE</span>
+    <span class="tab-header-txt" style="margin-left:40px">TIME</span>
+  </div>
+  <div class="tab-list" id="tab-list"></div>
+  <div class="tab-footer">
+    <span class="tab-footer-txt">Press TAB in-game to view</span>
+    <span class="tab-footer-txt" id="online-count">24 / 100</span>
+  </div>
+</div>
+<script src="../sounds.js"></script>
+<script src="../shared.js"></script>
+<script>
+const PLAYERS=[
+  {name:'DragonSlayer99',tag:'[Legend]',tagColor:'#ff4444',head:'👑',score:982450,kills:4421,time:'847h',ping:4,self:false},
+  {name:'CreeperQueen',tag:'[Diamond]',tagColor:'#00e5ff',head:'💎',score:741230,kills:3102,time:'612h',ping:18,self:false},
+  {name:'NotchFanboy',tag:'[Diamond]',tagColor:'#00e5ff',head:'🎯',score:698800,kills:2891,time:'589h',ping:12,self:false},
+  {name:'EnderKnight',tag:'[Gold]',tagColor:'#ffaa00',head:'⚔',score:543210,kills:2210,time:'401h',ping:32,self:false},
+  {name:'SteveMC',tag:'[Gold]',tagColor:'#ffaa00',head:'🛡',score:487650,kills:1998,time:'388h',ping:8,self:false},
+  {name:'YouAreHere',tag:'[Iron]',tagColor:'#c0c0c0',head:'😎',score:124400,kills:512,time:'98h',ping:22,self:true},
+  {name:'LavaRunner',tag:'[Iron]',tagColor:'#c0c0c0',head:'🔥',score:98210,kills:430,time:'87h',ping:55,self:false},
+  {name:'BuilderBot',tag:'[Stone]',tagColor:'#aaa',head:'🪨',score:45800,kills:120,time:'44h',ping:90,self:false},
+  {name:'NewPlayer123',tag:'[Stone]',tagColor:'#aaa',head:'🌿',score:12300,kills:44,time:'12h',ping:110,self:false},
+  {name:'ChickenJockey',tag:'[Stone]',tagColor:'#aaa',head:'🐔',score:9900,kills:30,time:'9h',ping:200,self:false},
+];
+
+function getPingBars(ping){
+  const bars=ping<20?5:ping<50?4:ping<80?3:ping<120?2:1;
+  const color=ping<50?'#55ff55':ping<100?'#ffaa00':'#ff5555';
+  return Array.from({length:5},(_,i)=>`<div class="ping-bar" style="height:${(i+1)*3}px;opacity:${i<bars?1:0.2};background:${color}"></div>`).join('');
+}
+
+let mode='score';
+function render(){
+  const list=document.getElementById('tab-list');
+  const sorted=[...PLAYERS].sort((a,b)=>mode==='playtime'?parseInt(b.time)-parseInt(a.time):mode==='kills'?b.kills-a.kills:b.score-a.score);
+  list.innerHTML='';
+  sorted.forEach((p,i)=>{
+    const row=document.createElement('div');
+    row.className='tab-row'+(p.self?' self':'');
+    row.innerHTML=`
+      <span class="rank-num">#${i+1}</span>
+      <div class="ping-bars">${getPingBars(p.ping)}</div>
+      <span class="player-head">${p.head}</span>
+      <span class="player-tag" style="color:${p.tagColor};border:1px solid ${p.tagColor}22">${p.tag}</span>
+      <span class="player-name" style="color:${p.self?'#00e5ff':'#fff'}">${p.name}${p.self?' (You)':''}</span>
+      <span class="player-score">${mode==='kills'?p.kills+' kills':mode==='playtime'?p.time:p.score.toLocaleString()}</span>
+      <span class="player-playtime">${p.time}</span>`;
+    list.appendChild(row);
+  });
+}
+render();
+document.getElementById('f-score').addEventListener('click',()=>{mode='score';render();});
+document.getElementById('f-playtime').addEventListener('click',()=>{mode='playtime';render();});
+document.getElementById('f-kills').addEventListener('click',()=>{mode='kills';render();});
+unlockAchievement('ranked');
+</script>
+</body>
+</html>
+

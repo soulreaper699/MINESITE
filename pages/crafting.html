@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VOXEL | Crafting Table</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+body{background:#0a0a0f;min-height:100vh;}
+.craft-page{padding:70px 20px 40px;display:flex;flex-direction:column;align-items:center;}
+h1{font-family:'Press Start 2P',cursive;font-size:0.8rem;color:#ffaa00;margin:16px 0;text-shadow:2px 2px 0 #553300;}
+.craft-container{display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap;justify-content:center;}
+.craft-ui{background:#373737;border:3px solid #fff;border-bottom-color:#555;border-right-color:#555;padding:20px;min-width:320px;}
+.craft-title{font-family:'Press Start 2P',cursive;font-size:0.55rem;color:#c6c6c6;margin-bottom:16px;text-align:center;}
+.craft-grid{display:grid;grid-template-columns:repeat(3,44px);gap:4px;margin-bottom:16px;}
+.craft-row{display:flex;align-items:center;gap:12px;justify-content:center;}
+.arrow{font-size:2rem;color:#555;}
+.result-slot{width:60px;height:60px;background:#8b8b8b;border:3px solid #555;border-top-color:#fff;border-left-color:#fff;display:flex;align-items:center;justify-content:center;font-size:2.2rem;cursor:none;transition:box-shadow 0.2s;}
+.result-slot.ready{box-shadow:0 0 20px rgba(255,170,0,0.8);animation:pulse 1s infinite alternate;}
+@keyframes pulse{from{box-shadow:0 0 10px rgba(255,170,0,0.4);}to{box-shadow:0 0 30px rgba(255,170,0,0.9);}}
+.btn-craft{margin-top:12px;}
+.inventory-ui{background:#373737;border:3px solid #fff;border-bottom-color:#555;border-right-color:#555;padding:16px;min-width:240px;}
+.inv-grid{display:grid;grid-template-columns:repeat(4,44px);gap:3px;margin-top:10px;}
+.inv-label{font-family:'Press Start 2P',cursive;font-size:0.45rem;color:#c6c6c6;margin-bottom:8px;display:block;}
+.recipes{margin-top:20px;max-width:700px;width:100%;}
+.recipe-list-title{font-family:'Press Start 2P',cursive;font-size:0.55rem;color:#ffaa00;margin:12px 0 8px;}
+.recipe-card{background:#1a1a2e;border:1px solid #333;padding:8px 12px;display:flex;align-items:center;gap:12px;cursor:none;margin-bottom:4px;transition:background 0.15s;}
+.recipe-card:hover{background:#252545;}
+.recipe-preview{display:grid;grid-template-columns:repeat(3,18px);gap:1px;font-size:0.9rem;}
+.recipe-arrow{font-size:1.2rem;color:#555;}
+.recipe-result{font-size:1.5rem;}
+.recipe-name{font-family:'Press Start 2P',cursive;font-size:0.4rem;color:#fff;}
+.recipe-desc{font-family:'VT323',monospace;font-size:1rem;color:#888;}
+#craft-log{font-family:'VT323',monospace;font-size:1.2rem;color:#55ff55;margin-top:12px;min-height:24px;text-align:center;}
+</style>
+</head>
+<body>
+<nav class="mc-nav">
+  <a class="mc-nav-logo" href="../index.html">VOXEL</a>
+  <div class="mc-nav-links">
+    <a href="../index.html">PORTAL ROOM</a>
+    <a href="crafting.html" class="active">CRAFTING</a>
+  </div>
+</nav>
+<div class="craft-page">
+  <h1>⚒ CRAFTING TABLE</h1>
+  <div class="craft-container">
+    <div class="craft-ui">
+      <div class="craft-title">▣ CRAFTING</div>
+      <div class="craft-row">
+        <div class="craft-grid" id="craft-grid">
+          <div class="inv-slot" data-i="0"></div><div class="inv-slot" data-i="1"></div><div class="inv-slot" data-i="2"></div>
+          <div class="inv-slot" data-i="3"></div><div class="inv-slot" data-i="4"></div><div class="inv-slot" data-i="5"></div>
+          <div class="inv-slot" data-i="6"></div><div class="inv-slot" data-i="7"></div><div class="inv-slot" data-i="8"></div>
+        </div>
+        <div class="arrow">➜</div>
+        <div class="result-slot" id="result-slot"></div>
+      </div>
+      <button class="mc-btn full btn-craft gold" id="btn-craft">CRAFT ITEM</button>
+      <div id="craft-log"></div>
+    </div>
+    <div class="inventory-ui">
+      <span class="inv-label">INVENTORY</span>
+      <div class="inv-grid" id="inv-grid"></div>
+    </div>
+  </div>
+
+  <div class="recipes">
+    <div class="recipe-list-title">📜 KNOWN RECIPES</div>
+    <div id="recipe-list"></div>
+  </div>
+</div>
+
+<script src="../sounds.js"></script>
+<script src="../shared.js"></script>
+<script>
+const ITEMS = {
+  '🪵':'Wood','🪨':'Stone','⚙':'Iron','💎':'Diamond','🔥':'Blaze Rod',
+  '📦':'Chest','🍎':'Apple','🌿':'Grass','🧵':'String','🪶':'Feather',
+  '🔮':'Pearl','🍖':'Meat','🏹':'Bow','⚔':'Sword','⛏':'Pickaxe',
+  '🪓':'Axe','🛡':'Shield','🎣':'Rod','🕯':'Torch','🪣':'Bucket',
+};
+
+const RECIPES = [
+  {name:'Diamond Sword',  result:'⚔',  count:1, grid:['','💎','','','💎','','','🪵','',''], desc:'Deals 7 dmg'},
+  {name:'Diamond Pickaxe',result:'⛏',  count:1, grid:['💎','💎','💎','','🪵','','','🪵','',''], desc:'Mines any block'},
+  {name:'Chest',          result:'📦', count:1, grid:['🪵','🪵','🪵','🪵','','🪵','🪵','🪵','🪵'], desc:'Storage'},
+  {name:'Torch',          result:'🕯', count:4, grid:['','🔥','','','🧵','','','','',''], desc:'Lights the way'},
+  {name:'Bow',            result:'🏹', count:1, grid:['','🪨','🧵','🪨','','🧵','','🪨','🧵'], desc:'Ranged weapon'},
+  {name:'Bucket',         result:'🪣', count:1, grid:['⚙','','⚙','','⚙','','','','',''], desc:'Holds liquids'},
+  {name:'Shield',         result:'🛡', count:1, grid:['🪵','⚙','🪵','🪵','🪵','🪵','','🪵',''], desc:'Blocks attacks'},
+  {name:'Axe',            result:'🪓', count:1, grid:['💎','💎','','💎','🪵','','','🪵',''], desc:'Chops wood fast'},
+];
+
+// inventory pool
+const invItems = ['🪵','🪵','🪵','🪨','🪨','⚙','⚙','💎','💎','💎','🔥','🧵','🧵','🪶','🔮','🍎'];
+const invGrid  = document.getElementById('inv-grid');
+const craftGrid= document.getElementById('craft-grid');
+const resultSlot=document.getElementById('result-slot');
+const craftLog = document.getElementById('craft-log');
+
+let heldItem = null;
+let craftSlots = Array(9).fill('');
+
+// Render inventory
+invItems.forEach(item => {
+  const slot = document.createElement('div'); slot.className='inv-slot'; slot.textContent=item;
+  slot.addEventListener('click',()=>{ heldItem=item; highlightHeld(); });
+  invGrid.appendChild(slot);
+});
+
+function highlightHeld(){
+  document.querySelectorAll('.inv-slot').forEach(s=>s.style.outline='');
+  if(heldItem) document.querySelectorAll('.inv-slot').forEach(s=>{if(s.textContent===heldItem)s.style.outline='2px solid #ffaa00';});
+}
+
+// Crafting grid slots
+craftGrid.querySelectorAll('.inv-slot').forEach(slot=>{
+  slot.addEventListener('click',()=>{
+    if(heldItem){ slot.textContent=heldItem; craftSlots[+slot.dataset.i]=heldItem; }
+    else { slot.textContent=''; craftSlots[+slot.dataset.i]=''; }
+    checkRecipe();
+  });
+  slot.addEventListener('contextmenu',e=>{e.preventDefault();slot.textContent='';craftSlots[+slot.dataset.i]='';checkRecipe();});
+});
+
+let currentResult=null;
+function checkRecipe(){
+  currentResult=null; resultSlot.textContent=''; resultSlot.classList.remove('ready');
+  for(const r of RECIPES){
+    if(r.grid.every((v,i)=>v===craftSlots[i])){currentResult=r;break;}
+  }
+  if(currentResult){ resultSlot.textContent=currentResult.result; resultSlot.classList.add('ready'); }
+}
+
+document.getElementById('btn-craft').addEventListener('click',()=>{
+  if(currentResult){
+    if (window.SFX) SFX.craft();
+    craftLog.textContent=`✔ Crafted: ${currentResult.name} ×${currentResult.count}!`;
+    craftSlots.fill('');
+    craftGrid.querySelectorAll('.inv-slot').forEach(s=>s.textContent='');
+    resultSlot.textContent=''; resultSlot.classList.remove('ready');
+    currentResult=null;
+    unlockAchievement('crafted');
+    setTimeout(()=>craftLog.textContent='',3000);
+  } else { 
+    if (window.SFX) SFX.craftFail();
+    craftLog.textContent='✘ Invalid recipe!'; 
+    setTimeout(()=>craftLog.textContent='',2000); 
+  }
+});
+
+// Render recipe list
+const recipeList=document.getElementById('recipe-list');
+RECIPES.forEach(r=>{
+  const card=document.createElement('div'); card.className='recipe-card';
+  const preview=document.createElement('div'); preview.className='recipe-preview';
+  r.grid.forEach(cell=>{const c=document.createElement('span');c.textContent=cell;preview.appendChild(c);});
+  card.innerHTML=`<div class="recipe-preview"></div><span class="recipe-arrow">→</span><span class="recipe-result">${r.result}</span><div><div class="recipe-name">${r.name}</div><div class="recipe-desc">${r.desc}</div></div>`;
+  card.querySelector('.recipe-preview').replaceWith(preview);
+  card.addEventListener('click',()=>{
+    craftSlots=[...r.grid]; craftSlots.forEach((v,i)=>{const s=craftGrid.querySelector(`[data-i="${i}"]`);if(s)s.textContent=v;});
+    checkRecipe();
+  });
+  recipeList.appendChild(card);
+});
+</script>
+</body>
+</html>
+
+

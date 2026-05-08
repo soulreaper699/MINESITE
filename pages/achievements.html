@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VOXEL | Achievements</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+body{background:#0a0a0f;}
+.ach-page{padding:70px 40px 40px;max-width:900px;margin:0 auto;}
+h1{font-family:'Press Start 2P',cursive;font-size:0.8rem;color:var(--mc-gold);text-shadow:2px 2px 0 #553300;margin:20px 0;}
+.progress-bar-wrap{background:#111;border:2px solid #333;height:14px;margin-bottom:24px;position:relative;}
+#ach-fill{height:100%;background:var(--mc-gold);transition:width 0.5s;}
+#ach-count{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:'Press Start 2P',cursive;font-size:0.4rem;color:#000;}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.ach-card{
+  background:#1a1a2e;border:2px solid #333;
+  padding:14px;display:flex;gap:12px;align-items:center;
+  transition:all 0.2s;position:relative;overflow:hidden;
+}
+.ach-card.unlocked{border-color:var(--mc-gold);background:#1e1800;box-shadow:0 0 16px rgba(255,170,0,0.2);}
+.ach-card.locked{filter:brightness(0.35);}
+.ach-card.unlocked::after{
+  content:'✔';position:absolute;top:6px;right:8px;
+  font-family:'Press Start 2P',cursive;font-size:0.5rem;color:var(--mc-gold);
+}
+.ach-icon{font-size:2.2rem;filter:drop-shadow(0 0 6px rgba(255,255,255,0.5));}
+.ach-info{}
+.ach-name{font-family:'Press Start 2P',cursive;font-size:0.5rem;color:#fff;margin-bottom:4px;}
+.ach-desc{font-family:'VT323',monospace;font-size:1.1rem;color:#888;}
+.unlock-date{font-family:'VT323',monospace;font-size:0.9rem;color:var(--mc-gold);margin-top:3px;}
+.ach-card.locked .ach-name::after{content:' ???';}
+</style>
+</head>
+<body>
+<nav class="mc-nav">
+  <a class="mc-nav-logo" href="../index.html">VOXEL</a>
+  <div class="mc-nav-links">
+    <a href="../index.html">PORTAL ROOM</a>
+    <a href="achievements.html" class="active">ACHIEVEMENTS</a>
+  </div>
+</nav>
+<div class="ach-page">
+  <h1>🏆 ACHIEVEMENTS</h1>
+  <div class="progress-bar-wrap">
+    <div id="ach-fill"></div>
+    <span id="ach-count">0 / 11</span>
+  </div>
+  <div class="ach-grid" id="ach-grid"></div>
+</div>
+<script src="../sounds.js"></script>
+<script src="../shared.js"></script>
+<script>
+const unlocked = window.getUnlocked();
+const grid = document.getElementById('ach-grid');
+const fill = document.getElementById('ach-fill');
+const count= document.getElementById('ach-count');
+
+const allKeys = Object.keys(window.ACHIEVEMENTS);
+fill.style.width = (unlocked.length/allKeys.length*100)+'%';
+count.textContent = `${unlocked.length} / ${allKeys.length}`;
+
+allKeys.forEach(key=>{
+  const a = window.ACHIEVEMENTS[key];
+  const isUnlocked = unlocked.includes(key);
+  const card = document.createElement('div');
+  card.className = 'ach-card ' + (isUnlocked ? 'unlocked' : 'locked');
+  card.innerHTML = `
+    <div class="ach-icon">${a.icon}</div>
+    <div class="ach-info">
+      <div class="ach-name">${a.name}</div>
+      <div class="ach-desc">${a.desc}</div>
+      ${isUnlocked ? '<div class="unlock-date">✔ UNLOCKED</div>' : ''}
+    </div>`;
+  grid.appendChild(card);
+});
+
+// Listen for real-time unlocks
+window.addEventListener('achievementUnlocked', ()=>{
+  const u = window.getUnlocked();
+  fill.style.width=(u.length/allKeys.length*100)+'%';
+  count.textContent=`${u.length} / ${allKeys.length}`;
+});
+</script>
+</body>
+</html>
+

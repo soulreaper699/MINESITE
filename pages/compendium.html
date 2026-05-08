@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VOXEL | Compendium</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+body{background:#1a0e00;min-height:100vh;}
+.comp-page{padding:70px 20px 60px;display:flex;flex-direction:column;align-items:center;}
+h1{font-family:'Press Start 2P',cursive;font-size:0.7rem;color:#cc8833;text-shadow:2px 2px 0 #3a1a00;margin:16px 0;}
+.book-wrap{position:relative;width:min(720px,95vw);height:480px;perspective:1200px;}
+.book{
+  width:100%;height:100%;position:relative;transform-style:preserve-3d;
+  display:flex;
+}
+.page{
+  width:50%;height:100%;position:relative;
+  background:#f5e8c8;
+  border:2px solid #8b6e3a;
+  padding:30px 28px;
+  overflow:hidden;
+  box-shadow:inset 0 0 20px rgba(0,0,0,0.15);
+}
+.page-left{border-right:none;border-radius:2px 0 0 2px;}
+.page-right{border-left:1px solid #c8aa78;border-radius:0 2px 2px 0;}
+.page-spine{width:10px;background:linear-gradient(90deg,#6b4c1a,#a07030,#6b4c1a);flex-shrink:0;}
+.page-title{font-family:'Press Start 2P',cursive;font-size:0.5rem;color:#3a1a00;margin-bottom:16px;border-bottom:1px solid #c8aa78;padding-bottom:8px;}
+.page-body{font-family:'VT323',monospace;font-size:1.15rem;color:#2a1400;line-height:1.7;}
+.page-body h3{font-family:'Press Start 2P',cursive;font-size:0.4rem;color:#5a2a00;margin:12px 0 6px;}
+.page-body ul{padding-left:16px;}
+.page-num{position:absolute;bottom:12px;width:100%;text-align:center;font-family:'VT323',monospace;font-size:1rem;color:#8b6e3a;left:0;}
+.book-controls{display:flex;gap:16px;margin-top:20px;}
+.chapter-list{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px;}
+.chapter-btn{font-family:'Press Start 2P',cursive;font-size:0.38rem;padding:6px 10px;background:#3a1a00;border:1px solid #8b6e3a;color:#cc8833;cursor:none;}
+.chapter-btn:hover,.chapter-btn.active{background:#8b6e3a;color:#fff;}
+</style>
+</head>
+<body>
+<nav class="mc-nav">
+  <a class="mc-nav-logo" href="../index.html">VOXEL</a>
+  <div class="mc-nav-links">
+    <a href="../index.html">PORTAL ROOM</a>
+    <a href="compendium.html" class="active">COMPENDIUM</a>
+  </div>
+</nav>
+<div class="comp-page">
+  <h1>📖 THE COMPENDIUM</h1>
+  <div class="book-wrap">
+    <div class="book">
+      <div class="page page-left" id="page-left">
+        <div class="page-title" id="title-left">Loading...</div>
+        <div class="page-body" id="body-left"></div>
+        <div class="page-num" id="num-left">1</div>
+      </div>
+      <div class="page-spine"></div>
+      <div class="page page-right" id="page-right">
+        <div class="page-title" id="title-right"></div>
+        <div class="page-body" id="body-right"></div>
+        <div class="page-num" id="num-right">2</div>
+      </div>
+    </div>
+  </div>
+  <div class="book-controls">
+    <button class="mc-btn" id="btn-prev">◀ PREV</button>
+    <button class="mc-btn" id="btn-next">NEXT ▶</button>
+  </div>
+  <div class="chapter-list" id="chapter-list"></div>
+</div>
+<script src="../sounds.js"></script>
+<script src="../shared.js"></script>
+<script>
+const CHAPTERS=[
+  {title:'Welcome',body:`<p>Welcome to the VOXEL Compendium — your guide to the server's lore, rules, and secrets.</p><p>Use the controls below to navigate or click a chapter tab.</p><h3>QUICK LINKS</h3><ul><li>Server Rules</li><li>Biome Lore</li><li>Plugin Guide</li><li>Staff Team</li></ul>`},
+  {title:'Server Rules',body:`<h3>RULE I</h3><p>Be respectful to all players at all times. Toxicity will result in a mute or ban.</p><h3>RULE II</h3><p>No griefing, stealing, or raiding in protected zones.</p><h3>RULE III</h3><p>No hacking, exploiting, or cheating of any kind.</p><h3>RULE IV</h3><p>No advertising other servers or Discord servers.</p>`},
+  {title:'Biome Lore',body:`<h3>THE DEEP DARK</h3><p>Beneath 600 blocks lies the Deep Dark — a biome of endless sculk and ancient cities. Wardens patrol endlessly.</p><h3>THE NETHER</h3><p>A hellish dimension of fire and fury. The Blaze Lords rule the fortresses. Enter at your own risk.</p>`},
+  {title:'Plugin Guide',body:`<h3>ECONOMY</h3><p>Use /balance to check coins. Earn by selling items at /market or completing quests.</p><h3>LANDS</h3><p>Claim your territory with /lands create. Invite members with /lands invite.</p><h3>MCMMO</h3><p>Level up skills by performing actions. Max level 1000 per skill.</p>`},
+  {title:'The Staff Team',body:`<h3>ADMINS</h3><ul><li>👑 VoxelAdmin — Server Owner</li><li>🛡 DeepDark — Co-Owner</li></ul><h3>MODERATORS</h3><ul><li>⚔ EnderGuard — Senior Mod</li><li>🌿 GrassBlock — Moderator</li><li>🔥 NetherWatch — Moderator</li></ul>`},
+  {title:'Changelog',body:`<h3>v2.4.1 — May 2026</h3><ul><li>Added Portal Room UI</li><li>New Dynmap integration</li><li>C418 Jukebox launched</li><li>Loot chest now daily</li></ul><h3>v2.3.0 — April 2026</h3><ul><li>Nether realm expanded</li><li>Sculk sensor mechanics added</li></ul>`},
+];
+
+let page=0;
+function renderPages(){
+  const left=CHAPTERS[page*2],right=CHAPTERS[page*2+1];
+  document.getElementById('title-left').textContent=left?left.title:'';
+  document.getElementById('body-left').innerHTML=left?left.body:'';
+  document.getElementById('num-left').textContent=(page*2+1);
+  document.getElementById('title-right').textContent=right?right.title:'';
+  document.getElementById('body-right').innerHTML=right?right.body:'';
+  document.getElementById('num-right').textContent=(page*2+2);
+  document.querySelectorAll('.chapter-btn').forEach((b,i)=>b.classList.toggle('active',i===page));
+}
+
+document.getElementById('btn-prev').addEventListener('click',()=>{if(page>0){page--;renderPages();}});
+document.getElementById('btn-next').addEventListener('click',()=>{if((page+1)*2<CHAPTERS.length){page++;renderPages();}});
+
+const cl=document.getElementById('chapter-list');
+Math.ceil(CHAPTERS.length/2);
+for(let i=0;i<Math.ceil(CHAPTERS.length/2);i++){
+  const b=document.createElement('button');b.className='chapter-btn';b.textContent=`CH.${i+1}`;
+  b.addEventListener('click',()=>{page=i;renderPages();});
+  cl.appendChild(b);
+}
+renderPages();
+unlockAchievement('read');
+</script>
+</body>
+</html>
+

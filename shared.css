@@ -1,0 +1,179 @@
+/* =========================================================================
+   VOXEL — Shared Stylesheet
+   ========================================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+:root {
+  --mc-bg:      #0a0a0f;
+  --mc-blue:    #00e5ff;
+  --mc-blue2:   #0070dd;
+  --mc-green:   #55ff55;
+  --mc-red:     #ff5555;
+  --mc-gold:    #ffaa00;
+  --mc-purple:  #aa00ff;
+  --mc-grey:    #8b8b8b;
+  --mc-stone:   #c6c6c6;
+  --mc-dark:    #1d1d1d;
+  --mc-slot:    #373737;
+  --border-lt:  #ffffff;
+  --border-dk:  #555555;
+  --font-px:    'Press Start 2P', cursive;
+  --font-vt:    'VT323', monospace;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--mc-bg);
+  color: #fff;
+  font-family: var(--font-vt);
+  overflow-x: hidden;
+  cursor: none;
+  min-height: 100vh;
+}
+
+/* =========================================================================
+   CROSSHAIR
+   ========================================================================= */
+#cursor-crosshair {
+  position: fixed; width: 22px; height: 22px;
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%, -50%);
+}
+#cursor-crosshair .ch-h {
+  position: absolute; top: 50%; left: 0; right: 0;
+  height: 2px; background: rgba(255,255,255,0.85);
+  transform: translateY(-50%);
+}
+#cursor-crosshair .ch-v {
+  position: absolute; left: 50%; top: 0; bottom: 0;
+  width: 2px; background: rgba(255,255,255,0.85);
+  transform: translateX(-50%);
+}
+
+/* =========================================================================
+   TOP NAVIGATION BAR
+   ========================================================================= */
+.mc-nav {
+  position: fixed; top: 0; left: 0; width: 100%;
+  height: 52px; padding: 0 30px;
+  background: rgba(0,0,0,0.85);
+  border-bottom: 2px solid #333;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 500; pointer-events: none;
+}
+.mc-nav-logo {
+  font-family: var(--font-px); font-size: 1.1rem;
+  color: var(--mc-blue);
+  text-shadow: 2px 2px 0 #005577, 0 0 20px rgba(0,229,255,0.4);
+  text-decoration: none; pointer-events: all;
+}
+.mc-nav-links {
+  display: flex; gap: 10px; align-items: center; pointer-events: all;
+}
+.mc-nav-links a {
+  font-family: var(--font-px); font-size: 0.42rem;
+  color: rgba(255,255,255,0.6); text-decoration: none;
+  padding: 6px 10px; border: 1px solid transparent;
+  transition: all 0.1s; cursor: none;
+}
+.mc-nav-links a:hover, .mc-nav-links a.active {
+  color: #fff; border-color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.05);
+}
+.mc-nav-links a.active { color: var(--mc-blue); border-color: var(--mc-blue); }
+
+/* =========================================================================
+   MC BUTTON
+   ========================================================================= */
+.mc-btn {
+  font-family: var(--font-px); font-size: 0.5rem;
+  background: var(--mc-grey);
+  border: 2px solid var(--border-dk);
+  border-top-color: var(--border-lt); border-left-color: var(--border-lt);
+  color: #fff; padding: 10px 18px; cursor: none;
+  text-shadow: 1px 1px 0 #000;
+  box-shadow: inset -2px -2px 0 rgba(0,0,0,0.4), inset 2px 2px 0 rgba(255,255,255,0.25);
+  transition: filter 0.1s; display: inline-block;
+}
+.mc-btn:hover { filter: brightness(1.25); }
+.mc-btn:active {
+  border-top-color: var(--border-dk); border-left-color: var(--border-dk);
+  border-bottom-color: var(--border-lt); border-right-color: var(--border-lt);
+}
+.mc-btn.full { width: 100%; text-align: center; }
+.mc-btn.blue  { background: #003399; border-top-color:#4466ff; border-left-color:#4466ff; }
+.mc-btn.green { background: #006600; border-top-color:#55ff55; border-left-color:#55ff55; }
+.mc-btn.gold  { background: #aa6600; border-top-color:#ffdd55; border-left-color:#ffdd55; }
+.mc-btn.red   { background: #880000; border-top-color:#ff5555; border-left-color:#ff5555; }
+
+/* =========================================================================
+   PANEL / PAGE WRAPPER
+   ========================================================================= */
+.mc-page {
+  padding-top: 60px;
+  min-height: 100vh;
+}
+.mc-panel {
+  background: rgba(0,0,0,0.6);
+  border: 3px solid var(--border-dk);
+  border-top-color: var(--border-lt); border-left-color: var(--border-lt);
+  padding: 24px; box-shadow: 4px 4px 0 rgba(0,0,0,0.8);
+}
+.mc-panel-title {
+  font-family: var(--font-px); font-size: 0.7rem;
+  color: var(--mc-stone); margin-bottom: 20px;
+  border-bottom: 2px solid #333; padding-bottom: 12px;
+}
+
+/* =========================================================================
+   ACHIEVEMENT TOAST
+   ========================================================================= */
+#toast-container {
+  position: fixed; top: 70px; right: 20px; z-index: 9000;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.achievement-toast {
+  display: flex; align-items: center; gap: 12px;
+  background: #222; border: 2px solid var(--mc-gold);
+  padding: 10px 16px; min-width: 280px;
+  animation: toastIn 0.3s ease, toastOut 0.4s ease 3.5s forwards;
+  box-shadow: 0 0 20px rgba(255,170,0,0.3);
+}
+.toast-icon { font-size: 1.8rem; }
+.toast-text { flex: 1; }
+.toast-title {
+  font-family: var(--font-px); font-size: 0.4rem; color: var(--mc-gold);
+  margin-bottom: 4px;
+}
+.toast-name { font-family: var(--font-vt); font-size: 1.1rem; color: #fff; }
+@keyframes toastIn  { from { opacity:0; transform:translateX(100%); } to { opacity:1; transform:none; } }
+@keyframes toastOut { from { opacity:1; } to { opacity:0; } }
+
+/* =========================================================================
+   INVENTORY SLOT
+   ========================================================================= */
+.inv-slot {
+  width: 44px; height: 44px;
+  background: #8b8b8b;
+  border: 2px solid var(--border-dk);
+  border-top-color: #555; border-left-color: #555;
+  border-bottom-color: var(--border-lt); border-right-color: var(--border-lt);
+  display: flex; align-items: center; justify-content: center;
+  cursor: none; position: relative; font-size: 1.5rem;
+  transition: background 0.1s;
+  user-select: none;
+}
+.inv-slot:hover, .inv-slot.selected { background: #a0a0ff; }
+.inv-slot .item-count {
+  position: absolute; bottom: 1px; right: 3px;
+  font-family: var(--font-px); font-size: 0.35rem;
+  color: #fff; text-shadow: 1px 1px 0 #000;
+}
+
+/* =========================================================================
+   SCROLLBAR
+   ========================================================================= */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: var(--mc-grey); border: 1px solid #555; }

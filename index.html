@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VOXEL | Portal Room</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+body { background:#050508; overflow:hidden; }
+#starfield { position:fixed;top:0;left:0;width:100%;height:100%;z-index:0; }
+.portal-grid {
+  position:relative;z-index:10;
+  display:grid; grid-template-columns:repeat(4,1fr); gap:24px;
+  padding:80px 40px 40px; max-width:1400px; margin:0 auto;
+}
+.portal-card {
+  cursor:none; text-decoration:none; color:#fff;
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  transition:transform 0.2s;
+}
+.portal-card:hover { transform:translateY(-6px); }
+.portal-frame {
+  width:140px; height:180px; position:relative;
+  display:flex; align-items:center; justify-content:center;
+}
+/* Portal border blocks */
+.portal-frame::before {
+  content:'';
+  position:absolute; inset:0;
+  border:16px solid #4a2e6e;
+  box-shadow:
+    inset 0 0 30px rgba(100,0,255,0.3),
+    0 0 20px rgba(100,0,255,0.4),
+    0 0 60px rgba(100,0,255,0.15);
+}
+.portal-card[data-color="nether"] .portal-frame::before {
+  border-color:#6e1a00;
+  box-shadow:inset 0 0 30px rgba(255,80,0,0.4),0 0 20px rgba(255,80,0,0.5),0 0 60px rgba(255,80,0,0.2);
+}
+.portal-card[data-color="blue"] .portal-frame::before {
+  border-color:#00336e;
+  box-shadow:inset 0 0 30px rgba(0,150,255,0.4),0 0 20px rgba(0,150,255,0.5),0 0 60px rgba(0,150,255,0.2);
+}
+.portal-card[data-color="green"] .portal-frame::before {
+  border-color:#006e1a;
+  box-shadow:inset 0 0 30px rgba(0,255,80,0.3),0 0 20px rgba(0,255,80,0.4),0 0 60px rgba(0,255,80,0.15);
+}
+.portal-card[data-color="gold"] .portal-frame::before {
+  border-color:#6e4400;
+  box-shadow:inset 0 0 30px rgba(255,170,0,0.4),0 0 20px rgba(255,170,0,0.5),0 0 60px rgba(255,170,0,0.2);
+}
+.portal-inner {
+  position:absolute; inset:16px;
+  animation:portalSwirl 3s linear infinite;
+  background:radial-gradient(ellipse at center, #7700ff 0%, #3300aa 40%, #110022 100%);
+  opacity:0.85;
+}
+.portal-card[data-color="nether"] .portal-inner {
+  background:radial-gradient(ellipse at center,#ff4400,#aa1100,#110000);
+}
+.portal-card[data-color="blue"] .portal-inner {
+  background:radial-gradient(ellipse at center,#0099ff,#003388,#000a22);
+}
+.portal-card[data-color="green"] .portal-inner {
+  background:radial-gradient(ellipse at center,#00ff55,#005522,#000a04);
+}
+.portal-card[data-color="gold"] .portal-inner {
+  background:radial-gradient(ellipse at center,#ffaa00,#aa5500,#0a0500);
+}
+@keyframes portalSwirl {
+  0%   { filter:hue-rotate(0deg)   blur(2px); }
+  100% { filter:hue-rotate(360deg) blur(2px); }
+}
+.portal-emoji { font-size:2.2rem; position:relative;z-index:2; filter:drop-shadow(0 0 8px rgba(255,255,255,0.8)); }
+.portal-label {
+  font-family:'Press Start 2P',cursive; font-size:0.45rem;
+  text-align:center; color:rgba(255,255,255,0.8); line-height:1.6;
+}
+.portal-sub { font-family:'VT323',monospace; font-size:1rem; color:rgba(255,255,255,0.4); }
+
+/* center title */
+.hub-title {
+  position:fixed; top:60px; left:50%; transform:translateX(-50%);
+  font-family:'Press Start 2P',cursive; font-size:1.2rem; color:#fff;
+  text-shadow:3px 3px 0 #000, 0 0 30px rgba(0,229,255,0.5);
+  z-index:20; white-space:nowrap; text-align:center;
+  pointer-events:none;
+}
+.hub-sub {
+  font-family:'VT323',monospace; font-size:1.3rem;
+  color:rgba(255,255,255,0.4); display:block; margin-top:8px;
+  font-size:1rem; letter-spacing:0.1em;
+}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<nav class="mc-nav">
+  <a class="mc-nav-logo" href="index.html">VOXEL</a>
+  <div class="mc-nav-links">
+    <a href="overworld.html">OVERWORLD</a>
+    <a href="pages/achievements.html">ACHIEVEMENTS</a>
+  </div>
+</nav>
+
+<div class="hub-title">
+  ⬡ THE PORTAL ROOM ⬡
+  <span class="hub-sub">— Choose your destination —</span>
+</div>
+
+<div class="portal-grid">
+  <a class="portal-card" data-color="blue"   href="overworld.html">
+    <div class="portal-frame"><div class="portal-inner"></div><span class="portal-emoji">🌿</span></div>
+    <div class="portal-label">OVERWORLD<br><span class="portal-sub">Main Server</span></div>
+  </a>
+  <a class="portal-card" data-color="green"  href="pages/dynmap.html">
+    <div class="portal-frame"><div class="portal-inner"></div><span class="portal-emoji">🗺️</span></div>
+    <div class="portal-label">DYNMAP<br><span class="portal-sub">World Map</span></div>
+  </a>
+  <a class="portal-card" data-color=""        href="pages/crafting.html">
+    <div class="portal-frame"><div class="portal-inner"></div><span class="portal-emoji">⚒️</span></div>
+    <div class="portal-label">CRAFTING<br><span class="portal-sub">Table</span></div>
+  </a>
+  <a class="portal-card" data-color="gold"   href="pages/achievements.html">
+    <div class="portal-frame"><div class="portal-inner"></div><span class="portal-emoji">🏆</span></div>
+    <div class="portal-label">ACHIEVEMENTS<br><span class="portal-sub">Progress Board</span></div>
+  </a>
+  <a class="portal-card" data-color="gold"   href="pages/market.html">
+    <div class="portal-frame"><div class="portal-inner"></div><span class="portal-emoji">🛒</span></div>
+    <div class="portal-label">MARKET<br><span class="portal-sub">Chest Shop</span></div>
+  </a>
+  <a class="portal-card" data-color=""        href="pages/enchanting.html">
+    <div class="portal-frame"><div class="portal-inner"></div><span class="portal-emoji">✦</span></div>
+    <div class="portal-label">ENCHANTING<br><span class="portal-sub">Room</span></div>
+  </a>
+  <a class="portal-card" data-color="blue"   href="pages/leaderboard.html">
+    <div class="portal-frame"><div class="portal-inner"></div><span class="portal-emoji">📊</span></div>
+    <div class="portal-label">LEADERBOARD<br><span class="portal-sub">Top Players</span></div>
+  </a>
+  <a class="portal-card" data-color="green"  href="pages/compendium.html">
+    <div class="portal-frame"><div class="portal-inner"></div><span class="portal-emoji">📖</span></div>
+    <div class="portal-label">COMPENDIUM<br><span class="portal-sub">Book &amp; Quill</span></div>
+  </a>
+  <a class="portal-card" data-color="nether" href="pages/lootchest.html">
+    <div class="portal-frame"><div class="portal-inner"></div><span class="portal-emoji">📦</span></div>
+    <div class="portal-label">LOOT CHEST<br><span class="portal-sub">Daily Drop</span></div>
+  </a>
+  <a class="portal-card" data-color=""        href="pages/jukebox.html">
+    <div class="portal-frame"><div class="portal-inner"></div><span class="portal-emoji">🎵</span></div>
+    <div class="portal-label">JUKEBOX<br><span class="portal-sub">C418 Music</span></div>
+  </a>
+</div>
+
+<canvas id="starfield"></canvas>
+<script src="sounds.js"></script>
+<script src="shared.js"></script>
+<script>
+// Starfield particles
+const c = document.getElementById('starfield');
+const ctx = c.getContext('2d');
+c.width = innerWidth; c.height = innerHeight;
+const stars = Array.from({length:200},()=>({
+  x:Math.random()*innerWidth, y:Math.random()*innerHeight,
+  r:Math.random()*1.5+0.2, s:Math.random()*0.4+0.1
+}));
+function drawStars(){
+  ctx.clearRect(0,0,c.width,c.height);
+  stars.forEach(s=>{
+    s.y+=s.s; if(s.y>c.height){s.y=0;s.x=Math.random()*c.width;}
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.6)';ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+window.addEventListener('resize',()=>{c.width=innerWidth;c.height=innerHeight;});
+
+// Portal click achievement
+document.querySelectorAll('.portal-card').forEach(card=>{
+  card.addEventListener('click',()=>unlockAchievement('portal'));
+});
+</script>
+</body>
+</html>

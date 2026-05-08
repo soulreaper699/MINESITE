@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VOXEL | Loot Chest</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+body{background:#0a0a0f;min-height:100vh;overflow:hidden;}
+.loot-page{padding:70px 20px 40px;display:flex;flex-direction:column;align-items:center;min-height:100vh;}
+h1{font-family:'Press Start 2P',cursive;font-size:0.75rem;color:var(--mc-gold);text-shadow:2px 2px 0 #553300;margin:20px 0 8px;}
+.subtitle{font-family:'VT323',monospace;font-size:1.3rem;color:#888;margin-bottom:24px;}
+.chest-container{position:relative;cursor:none;}
+.chest-svg{width:160px;height:auto;filter:drop-shadow(0 0 20px rgba(255,170,0,0.3));transition:filter 0.3s;}
+.chest-container:hover .chest-svg{filter:drop-shadow(0 0 30px rgba(255,170,0,0.6));}
+.chest-lid{transform-origin:top center;transform:rotateX(0deg);transition:transform 0.5s ease;}
+.chest-lid.open{transform:rotateX(-110deg);}
+#drops-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;}
+.drop-item{position:absolute;font-size:2rem;animation:dropFly 2s ease-out forwards;}
+@keyframes dropFly{0%{transform:scale(0.3) translateY(0);opacity:1;}80%{opacity:1;}100%{transform:scale(1.5) translateY(-200px);opacity:0;}}
+.loot-display{margin-top:24px;min-height:80px;text-align:center;}
+.loot-item-name{font-family:'Press Start 2P',cursive;font-size:0.6rem;margin-bottom:4px;}
+.loot-rarity{font-family:'VT323',monospace;font-size:1.4rem;}
+.cooldown-bar{width:200px;height:8px;background:#111;border:1px solid #333;margin:16px auto 0;}
+#cd-fill{height:100%;background:var(--mc-gold);width:100%;transition:width 1s linear;}
+.cd-label{font-family:'VT323',monospace;font-size:1rem;color:#555;text-align:center;margin-top:4px;}
+.history{margin-top:20px;max-width:360px;width:100%;}
+.history-title{font-family:'Press Start 2P',cursive;font-size:0.45rem;color:#555;margin-bottom:8px;}
+.history-item{font-family:'VT323',monospace;font-size:1.1rem;color:#888;border-left:2px solid #333;padding:2px 8px;margin-bottom:3px;}
+</style>
+</head>
+<body>
+<div id="drops-container"></div>
+<nav class="mc-nav">
+  <a class="mc-nav-logo" href="../index.html">VOXEL</a>
+  <div class="mc-nav-links">
+    <a href="../index.html">PORTAL ROOM</a>
+    <a href="lootchest.html" class="active">LOOT CHEST</a>
+  </div>
+</nav>
+<div class="loot-page">
+  <h1>📦 DAILY LOOT CHEST</h1>
+  <p class="subtitle">Click the chest to claim your daily drop!</p>
+  <div class="chest-container" id="chest-container">
+    <svg class="chest-svg" viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+      <g id="chest-lid" class="chest-lid">
+        <rect x="5" y="5" width="90" height="28" fill="#8B4513" rx="2"/>
+        <rect x="8" y="8" width="84" height="22" fill="#A0522D" rx="1"/>
+        <rect x="42" y="22" width="16" height="12" fill="#8B4513"/>
+        <rect x="44" y="24" width="12" height="8" fill="#cd853f" rx="1"/>
+        <rect x="48" y="26" width="4" height="4" fill="#7a3c00"/>
+      </g>
+      <rect x="5" y="38" width="90" height="37" fill="#8B4513" rx="2"/>
+      <rect x="8" y="41" width="84" height="31" fill="#A0522D" rx="1"/>
+      <rect x="42" y="43" width="16" height="12" fill="#8B4513"/>
+      <rect x="44" y="45" width="12" height="8" fill="#cd853f" rx="1"/>
+      <rect x="48" y="47" width="4" height="4" fill="#7a3c00"/>
+    </svg>
+  </div>
+  <div class="loot-display">
+    <div class="loot-item-name" id="loot-name">???</div>
+    <div class="loot-rarity" id="loot-rarity"></div>
+  </div>
+  <div class="cooldown-bar"><div id="cd-fill"></div></div>
+  <div class="cd-label" id="cd-label">Click to open!</div>
+  <div class="history">
+    <div class="history-title">RECENT DROPS</div>
+    <div id="history-list"></div>
+  </div>
+</div>
+<script src="../sounds.js"></script>
+<script src="../shared.js"></script>
+<script>
+const LOOT=[
+  {name:'Diamond Sword',emoji:'⚔',rarity:'RARE',color:'#00e5ff'},
+  {name:'Elytra',emoji:'🪂',rarity:'EPIC',color:'#aa00ff'},
+  {name:'Netherite Ingot',emoji:'🔱',rarity:'EPIC',color:'#aa00ff'},
+  {name:'Enchanted Apple',emoji:'🍎',rarity:'LEGENDARY',color:'#ffaa00'},
+  {name:'64x Diamonds',emoji:'💎',rarity:'RARE',color:'#00e5ff'},
+  {name:'Shulker Box',emoji:'📦',rarity:'UNCOMMON',color:'#aa88ff'},
+  {name:'Stack of XP',emoji:'✨',rarity:'UNCOMMON',color:'#aa88ff'},
+  {name:'Iron Sword',emoji:'🗡',rarity:'COMMON',color:'#aaa'},
+  {name:'Bread x16',emoji:'🍞',rarity:'COMMON',color:'#aaa'},
+  {name:'Golden Apple',emoji:'🍏',rarity:'UNCOMMON',color:'#aa88ff'},
+  {name:'Totem of Undying',emoji:'🗿',rarity:'LEGENDARY',color:'#ffaa00'},
+  {name:'Iron Ingot x32',emoji:'⚙',rarity:'COMMON',color:'#aaa'},
+];
+
+const COOLDOWN_MS=10000; // 10s for demo (24h in prod)
+let onCooldown=false;
+const history=[];
+
+const lid=document.getElementById('chest-lid');
+const dropsContainer=document.getElementById('drops-container');
+const lootName=document.getElementById('loot-name');
+const lootRarity=document.getElementById('loot-rarity');
+const cdFill=document.getElementById('cd-fill');
+const cdLabel=document.getElementById('cd-label');
+const historyList=document.getElementById('history-list');
+
+document.getElementById('chest-container').addEventListener('click',()=>{
+  if(onCooldown)return;
+  // Open lid
+  lid.classList.add('open');
+
+  // Pick loot
+  const item=LOOT[Math.floor(Math.random()*LOOT.length)];
+  window.dispatchEvent(new CustomEvent('lootDrop', { detail: item.rarity }));
+  lootName.textContent=item.name; lootName.style.color=item.color;
+  lootRarity.textContent=`✦ ${item.rarity} ✦`; lootRarity.style.color=item.color;
+
+  // Spawn flying drops
+  for(let i=0;i<12;i++){
+    const d=document.createElement('div');d.className='drop-item';
+    d.textContent=item.emoji;
+    d.style.left=(35+Math.random()*30)+'vw'; d.style.top='50vh';
+    d.style.animationDelay=(Math.random()*0.4)+'s';
+    dropsContainer.appendChild(d);
+    setTimeout(()=>d.remove(),2200);
+  }
+
+  // History
+  history.unshift(`${item.emoji} ${item.name} [${item.rarity}]`);
+  if(history.length>5)history.pop();
+  historyList.innerHTML=history.map(h=>`<div class="history-item">${h}</div>`).join('');
+
+  unlockAchievement('looted');
+  if(item.rarity==='LEGENDARY')unlockAchievement('lootAny');
+
+  // Cooldown
+  onCooldown=true;
+  let remaining=COOLDOWN_MS/1000;
+  cdFill.style.width='0%';
+  cdLabel.textContent=`Next drop in ${remaining}s`;
+  const interval=setInterval(()=>{
+    remaining--;
+    cdFill.style.width=((COOLDOWN_MS/1000-remaining)/(COOLDOWN_MS/1000)*100)+'%';
+    cdLabel.textContent=`Next drop in ${remaining}s`;
+    if(remaining<=0){
+      clearInterval(interval);onCooldown=false;
+      lid.classList.remove('open');
+      lootName.textContent='???';lootRarity.textContent='';
+      cdFill.style.width='100%';cdLabel.textContent='Click to open!';
+    }
+  },1000);
+});
+</script>
+</body>
+</html>
+
